@@ -6,7 +6,6 @@ import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
 
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
@@ -47,6 +46,8 @@ public class streamSimulator {
 	
 	private static String mode = "c";
 
+	private static int timeIndex = 7;
+	
 	private static TreeMap<Long, HashSet<String>> data = new TreeMap<>();
 
     public static Producer<Long, String> createProducer() {
@@ -76,16 +77,17 @@ public class streamSimulator {
     }
 
 	private static void showHelp(){
-		System.out.println("usage: java -jar simulator.jar --broker <IP:PORT> --mode <mode> --i <inputFile> --topic <topic> --sleep <sleep> {--realtime}");
+		System.out.println("usage: java -jar simulator.jar --broker <IP:PORT> --mode <mode> --i <inputFile> --topic <topic> --sleep <sleep> {--realtime} --timeIndex <index>");
 		System.out.println("mode: \"s\" for producer, \"c\" for consumer");
 		System.out.println("inputFile: path to file that will be streamed (applies on \"s\" mode). " +
 				"If no input file is provided, stdin is used");
 		System.out.println("--broker: set the broker's IP and port, e.g. 127.0.0.1:9092");
 		System.out.println("--sleep: speed parameter, e.g. --sleep 0.25 forces the stream to play on 1/4 of the realtime stream");
 		System.out.println("--realtime: enable realtime simulation, based on the timestamps of records ");
+		System.out.println("--timeIndex: set the timestamp column index, for the given data (applies on mode \"s\" only)");
 		System.out.println("Alternatively use --config <file> to provide the above settings in a list of <key>=<value> entries, e.g. broker=127.0.0.1:9092 to set the broker's IP and port");
 	}
-	
+
 	public static void main(String[] args) {
 		// option a: Start a topic and send messages
 		// option b: start a consumer and write received messages on console
@@ -152,11 +154,8 @@ public class streamSimulator {
 		}catch (Exception e){
 			e.printStackTrace();
 		}
-			
 	}
-
-	private static int TimeIndex = 0;
-
+	
 	private static int cntr = 0;
 
 	private static void runProducer() {
@@ -177,7 +176,7 @@ public class streamSimulator {
 				Files.lines(Paths.get(streamingFile)).skip(1).forEach(i->{
 					String[] tmp = i.split(";",-1);
 					try {
-						long unixtime = s1.parse(tmp[7]).getTime()/1000l;
+						long unixtime = s1.parse(tmp[timeIndex]).getTime()/1000l;
 						HashSet<String> set = data.get(unixtime);
 						if(set==null)set = new HashSet<String>();
 						set.add(i);
